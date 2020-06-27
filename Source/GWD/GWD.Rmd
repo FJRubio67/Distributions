@@ -1,0 +1,84 @@
+---
+title: "The Generalised Weibull Distribution"
+author: '[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Generalised Weibull Distribution
+
+The Generalised Weibull distribution was proposed by [1]. This distribution is defined in terms of its quantile function:
+$$
+Q(u;\sigma,\alpha,\lambda) = \sigma\left[\dfrac{1-(1-u)^\lambda}{\lambda}\right]^\alpha, \,\,\,\,\, \text{if} \,\,\, \lambda\neq 0,\\
+Q(u;\sigma,\alpha,\lambda) = \sigma\left[-\log(1-u)\right]^\alpha, \,\,\,\,\, \text{if} \,\,\, \lambda = 0.
+$$
+where $\alpha>0$, $\sigma>0$, and $\lambda \in{\mathbb R}$. The cumulative distribution function is given by
+$$
+F(t;\sigma,\alpha,\lambda) = 1 -  ( 1-\lambda(t/\sigma)^{1/\alpha})^{1/\lambda},
+$$
+while the hazard function is 
+$$
+h(t;\sigma,\alpha,\lambda) = \dfrac{(t/\sigma)^{\frac{1}{\alpha}-1}}{\alpha\sigma\left( 1-\lambda(t/\sigma)^{1/\alpha} \right)}.
+$$
+The support of the generalised Weibull distribution is $(0,\infty)$ for $\lambda\leq 0$ and $(0,\sigma/\lambda^\alpha)$ for $\lambda>0$.
+
+The following R code contains an implementation of the cumulative distribution function, quantile function, hazard function, and cumulative hazard function of the Generalised Weibull distribution.
+
+
+**References**
+
+1. [A Generalization of the Weibull Distribution with Application to the Analysis of Survival Data](http://www.jstor.org/stable/2291583)
+
+```{r}
+rm(list=ls())
+# t         : vector of quantiles.
+# p         : vector of probabilities.
+# sigma     : scale parameter
+# lambda    : shape parameter
+# alpha     : shape parameter
+
+# Quantile function
+qgenweibull<- function(p,sigma,alpha,lambda,log.p=FALSE){
+  if(lambda==0) quant <- sigma*( -log(1-p) )^alpha
+  else quant <-  sigma*( (1-(1-p)^lambda)/lambda )^alpha
+  ifelse(log.p, return(quant), return(exp(quant)))
+}  
+
+# Cumulative distribution function
+pgenweibull<- function(t,lambda,kappa,alpha,log.p=FALSE){
+  log.cdf <- log( 1 - ( 1 - lambda*( t/sigma )^(1/alpha)  )^(1/lambda) )
+    ifelse(log.p, return(log.cdf), return(exp(log.cdf)))
+}  
+
+# Hazard function
+hgenweibull<- function(t,sigma,alpha,lambda,log.p=FALSE){
+  log.h <- (1/alpha-1)*log(t/sigma) - log(alpha) - log(sigma) - log( 1 - lambda*( t/sigma )^(1/alpha) )
+  ifelse(log.p, return(log.h), return(exp(log.h)))
+}  
+
+# Cumulative hazard function
+CHgenweibull <- function(t,sigma,alpha,lambda,log.p=FALSE){
+  log.CH <- log( 1 - lambda*( t/sigma )^(1/alpha) )/lambda 
+  ifelse(log.p, return(log.CH), return(exp(log.CH)))
+} 
+
+
+# Examples of the shape of the hazard function for different values of the parameters
+h1 <- Vectorize(function(t) hgenweibull(t,1,1,0))
+h2 <- Vectorize(function(t) hgenweibull(t,1,1.5,0))
+h3 <- Vectorize(function(t) hgenweibull(t,1.9,1.75,0.55))
+h4 <- Vectorize(function(t) hgenweibull(t,0.9,1,0.15))
+h5 <- Vectorize(function(t) hgenweibull(t,0.25,0.8,-1 ))
+
+#par(mfrow = c(3,2))
+curve(h1,0,5,ylim=c(0,5),col="black",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h2,0,4,ylim=c(0,5),col="blue",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h3,0,5,ylim=c(0,5),col="red",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h4,0,5,ylim=c(0,5),col="green",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h5,0,5,ylim=c(0,5),col="purple",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+```
+
