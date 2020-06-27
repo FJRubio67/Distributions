@@ -1,0 +1,92 @@
+---
+title: "The Exponentiated Weibull distribution"
+author: "[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)"
+date: "27 June 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Exponentiated Weibull distribution
+
+The [Exponentiated Weibull distribution](https://en.wikipedia.org/wiki/Exponentiated_Weibull_distribution) is a generalisation of the [Weibull distribution](https://en.wikipedia.org/wiki/Weibull_distribution) which is obtained by exponentiating the Weibull cumulative distribution function. This simple transformation adds a second shape parameter that, interestingly, induces a lot of flexibility on the hazard function. The hazard function of the Exponentiated Weibull distribution can capture the basic shapes: constant, increasing, decreasing, bathtub, and unimodal, making it appealing for survival models.
+
+The probability density function and cumulative distribution function of the Exponentiated Weibull distribution are respectively given by:
+$$f_{EW}(t) =  \alpha \dfrac{\kappa}{\lambda} \left(\dfrac{t}{\lambda}\right)^{\kappa-1} \left[1-\exp\left\{-\left(\dfrac{t}{\lambda}\right)^{\kappa}\right\}\right]^{\alpha-1} \exp\left\{-\left(\dfrac{t}{\lambda}\right)^{\kappa}\right\}, \\
+F_{EW}(t) = \left[1-\exp\left\{-\left(\dfrac{t}{\lambda}\right)^{\kappa}\right\}\right]^{\alpha},$$
+where $t>0$, $\alpha>0$, $\lambda>0$, and $\kappa>0$. The parameter $\lambda$ is a scale parameter, $\kappa$ is a shape parameter, and $\alpha$ is the power (shape) parameter. The following R code contains an implementation of the probability density function, cumulative distribution function, quantile function, random number generation, hazard function, and cumulative hazard function of the Exponentiated Weibull distribution using the [commands](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Weibull.html) already implemented in R for the Weibull distribution.
+
+**References.**
+
+1. [A comparison of the generalized gamma and exponentiated Weibull distributions](http://onlinelibrary.wiley.com/wol1/doi/10.1002/sim.6159/abstract)
+
+2. [Log-location-scale-log-concave distributions for survival and reliability analysis
+](https://projecteuclid.org/euclid.ejs/1450456320)
+
+```{r}
+rm(list=ls())
+# t, q      : vector of quantiles.
+# p         : vector of probabilities.
+# n         : number of observations. 
+# lambda : scale parameter
+# kappa  : shape parameter
+# alpha  : power (shape) parameter
+
+# Cumulative distribution function
+pexpweibull<- function(t,lambda,kappa,alpha,log.p=FALSE){
+  log.cdf <- alpha*pweibull(t,scale=lambda,shape=kappa,log.p=TRUE)
+  ifelse(log.p, return(log.cdf), return(exp(log.cdf)))
+}  
+
+# Probability density function
+dexpweibull<- function(t,lambda,kappa,alpha,log=FALSE){
+  log.pdf <-  log(alpha) + (alpha-1)*pweibull(t,scale=lambda,shape=kappa,log.p=TRUE) + 
+                dweibull(t,scale=lambda,shape=kappa,log=TRUE)
+  ifelse(log, return(log.pdf), return(exp(log.pdf)))
+}
+
+# Quantile function
+qexpweibull<- function(p,lambda,kappa,alpha,log.p=FALSE){
+  quant <-  qweibull(p^(1/alpha),scale=lambda,shape=kappa,log.p = TRUE)
+  ifelse(log, return(quant), return(exp(quant)))
+}  
+
+# Random number generation
+rexpweibull<- function(n,lambda,kappa,alpha,log=FALSE){
+  u = runif(n)
+  sim <-  qweibull(u^(1/alpha),scale=lambda,shape=kappa)
+  return(sim)
+} 
+
+# Hazard function
+hexpweibull <- function(t,lambda,kappa,alpha,log=FALSE){
+  log.pdf <-  log(alpha) + (alpha-1)*pweibull(t,scale=lambda,shape=kappa,log.p=TRUE) + 
+    dweibull(t,scale=lambda,shape=kappa,log=TRUE)
+  cdf <- exp(alpha*pweibull(t,scale=lambda,shape=kappa,log.p=TRUE) )
+  log.h <- log.pdf - log(1-cdf)
+ifelse(log, return(log.h), return(exp(log.h)))
+}                                                                                      
+
+# Cumulative hazard function
+CHexpweibull <- function(t,lambda,kappa,alpha,log.p=FALSE){
+  cdf <- exp(alpha*pweibull(t,scale=lambda,shape=kappa,log.p=TRUE) )
+  return(-log(1-cdf))
+} 
+
+# Examples of the shape of the hazard function for different values of the parameters
+h1 <- Vectorize(function(t) hexpweibull(t,1,1,1))
+h2 <- Vectorize(function(t) hexpweibull(t,1,1.5,1))
+h3 <- Vectorize(function(t) hexpweibull(t,0.5,0.5,0.2))
+h4 <- Vectorize(function(t) hexpweibull(t,3,4,0.005))
+h5 <- Vectorize(function(t) hexpweibull(t,0.000005 ,0.15,110 ))
+
+#par(mfrow = c(3,2))
+curve(h1,0,5,ylim=c(0,5),col="black",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h2,0,5,ylim=c(0,5),col="blue",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h3,0,5,ylim=c(0,5),col="red",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h4,0,5,ylim=c(0,5),col="green",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+curve(h5,0,5,ylim=c(0,5),col="purple",lwd=2,n=1000,xlab="t",ylab="Hazard function",cex.axis=1.5,cex.lab=1.5)
+```
+
