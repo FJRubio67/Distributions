@@ -1,0 +1,85 @@
+---
+title: "The Laplace and two-piece Laplace Distributions"
+author: '[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)'
+date: "02/07/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Laplace and two-piece Laplace Distributions
+
+The following R code contains the implementation of the [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution) and two piece Laplace distributions (using the [R package twopiece](https://sites.google.com/site/fjavierrubio67/resources)).
+
+**References.**
+
+1. [Inference in Two-Piece Location-Scale Models with Jeffreys Priors](http://rpubs.com/FJRubio/twopiece)
+
+2. [Inference for grouped data with a truncated skew-Laplace distribution](https://doi.org/10.1016/j.csda.2011.06.002)
+
+3. [twopiece R package](http://rpubs.com/FJRubio/twopiece)
+
+4. [The Laplace Distribution and Generalizations](http://www.springer.com/gb/book/9780817641665)
+
+```{r}
+# Package only required for the last example
+library(twopiece)
+
+# Probability Density Function: location parameter mu and scale parameter sigma
+dlap = function(x,mu=0,sigma=1,log=FALSE){
+  log.den = - log(2) - log(sigma) - abs(x-mu)/sigma
+  if(log) log.den
+  else exp(log.den)
+}
+
+# Cumulative Distribution Function
+plap = function(x,mu=0,sigma=1,log.p=FALSE){
+    if(x<mu){
+    log.cdf1 = -log(2) + (x-mu)/sigma
+    if(log.p) return(log.cdf1)
+    else return(exp(log.cdf1))
+  }
+  if(x>=mu){
+      log.cdf2 = -log(2) + (-x-mu)/sigma
+      if(log.p) log(1 - exp(log.cdf2))
+      else 1 - exp(log.cdf2)
+  }
+}
+
+# Quantile Function
+qlap = function(p,mu=0,sigma=1){
+  if(p<0.5) return( mu + sigma*log(2*p))
+  if(p>=0.5) return( mu - sigma*log(2*(1-p)))
+}
+
+# Random number generation 
+rlap = function(n,mu=0,sigma=1){
+  u = runif(n)
+  rgen = ifelse(u<0.5,mu + sigma*log(2*u),mu - sigma*log(2*(1-u)))
+  return(rgen)
+}
+
+
+# Examples
+
+# Laplace Density vs histogram
+tempf = Vectorize(function(x) dlap(x,10,2))
+set.seed(111)
+hist(rlap(10000,10,2),breaks=250,probability=T,ylim=c(0,0.3),xlab="x",ylab="Density",main="Simulated data")
+curve(tempf,col="red",lwd=2,add=T,n=1000)
+box()
+
+# Evaluation
+qlap(0.3)
+plap(-0.5108256)
+dlap(0.3)
+
+# two-piece Laplace density vs histogram
+set.seed(111)
+hist(rtp3(10000,0,1,0.5,param="eps",FUN=rlap),breaks=250,probability=T,ylim=c(0,0.55),xlab="x",ylab="Density",main="Simulated data")
+dtplap = Vectorize(function(x) dtp3(x,0,1,0.5,FUN=dlap,param="eps"))
+curve(dtplap,-15,5,n=1000,lwd=2,xlab="x",ylab="Density",add=T,col="red")
+box()
+```

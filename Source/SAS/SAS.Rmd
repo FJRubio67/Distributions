@@ -1,0 +1,102 @@
+---
+title: "Sinh-arcsinh distribution"
+author: "[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)"
+date: "29 June 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sinh-arcsinh distribution and related distributions
+
+The Sinh-arcsinh (SAS) cumulative distribution function (cdf) [1] is obtained by composing the parametric function $H(x;\mu,\sigma,\varepsilon,\delta) =  \sinh \left( \delta \operatorname{arcsinh} \left( \dfrac{x-\mu}{\sigma} \right) - \varepsilon\right)$ with the normal cdf, as follows:
+
+$$
+S_0(x;\mu,\sigma,\varepsilon,\delta)= \Phi\left[H(x;\mu,\sigma,\varepsilon,\delta)\right],
+$$
+
+
+where $x\in{\mathbb R}$, $\mu \in{\mathbb R}$ is the location parameter, $\sigma\in{\mathbb R}_+$ is the scale parameter, $\varepsilon\in{\mathbb R}$, and $\delta\in{\mathbb R}_+$. The corresponding density function can be obtained in closed-form by differentiating $S_0$ as follows:
+
+$$
+s_0(x;\mu,\sigma,\varepsilon,\delta)= \phi\left[H(x;\mu,\sigma,\varepsilon,\delta)\right] h(x;\mu,\sigma,\varepsilon,\delta),
+$$
+
+\noindent where $h(x;\mu,\sigma,\varepsilon,\delta) = \dfrac{\delta \cosh\left(\delta\operatorname{arcsinh}\left(\dfrac{x-\mu}{\sigma}\right)-\varepsilon\right)}{\sigma\sqrt{ 1 + \left(\dfrac{x-\mu}{\sigma}\right)^2 }}$. [1] show that density $s_0$ is unimodal and that $(\varepsilon,\delta)$ can be interpreted as skewness and kurtosis parameters, respectively, if they are studied separately. [2] proposed an alternative way to induce skewness on the SAS distribution by using the two-piece construction [4], which allows for capturing higher levels of skewness than the original SAS distribution. This distribution, the two-piece SAS (TPSAS), distribution is implemented in the [R package TPSAS](https://sites.google.com/site/fjavierrubio67/resources). 
+
+The R code below implements the probability density function, cumulative distribution function, quantile function, and random number generation of the SAS distribution.
+
+**References.**
+
+1. [Sinh-arcsinh distributions](https://doi.org/10.1093/biomet/asp053)
+
+2. [On modelling asymmetric data using two-piece sinh-arcsinh distributions](http://projecteuclid.org/euclid.bjps/1469807223)
+
+3. [TPSAS R package](http://rpubs.com/FJRubio/TPSAS)
+
+4. [Inference in Two-Piece Location-Scale Models with Jeffreys Priors](http://projecteuclid.org/euclid.ba/1393251764)
+
+```{r}
+#######################################################################
+# Original sinh-arcsinh
+#######################################################################
+rm(list=ls())
+# PDF
+
+dsas <- function(x,mu,sigma,epsilon,delta,log=FALSE){
+  ifelse(sigma>0 & delta>0,
+         logPDF <- dnorm(sinh(delta*asinh((x-mu)/sigma)-epsilon),0,1,log=T) + log(delta) + log(cosh(delta*asinh((x-mu)/sigma)-epsilon)) -0.5*log(1+(x-mu)^2/sigma^2) - log(sigma),
+         logPDF <- 'parameters out of range')
+  ifelse( is.numeric(logPDF),ifelse( log, return(logPDF), return(exp(logPDF)) ), logPDF )
+}
+
+# Example
+tempf <- function(x) dsas(x,0,1,-1,1.5)
+curve(tempf,-5,2,lwd=2,xlab="x",ylab="Density",cex.axis=1.5,cex.lab=1.5)
+integrate(tempf,-Inf,Inf)
+
+
+# CDF
+psas <- function(x,mu,sigma,epsilon,delta,log.p=FALSE){
+  ifelse(sigma>0 & delta>0,
+         logCDF <- pnorm(sinh(delta*asinh((x-mu)/sigma)-epsilon),0,1,log.p=T),
+         logCDF <- 'parameters out of range')
+  ifelse( is.numeric(logCDF),ifelse( log.p, return(logCDF), return(exp(logCDF)) ), logCDF )
+}
+
+# Example
+tempf <- function(x) psas(x,0,1,-1,1.5)
+curve(tempf,-5,5,lwd=2,xlab="x",ylab="Distribution",cex.axis=1.5,cex.lab=1.5)
+
+
+# Quantile function
+
+qsas <- function(p,mu,sigma,epsilon,delta){
+  ifelse(sigma>0 & delta>0,
+         Q <- mu + sigma*sinh((asinh(qnorm(p)) + epsilon)/delta),
+         Q <- 'parameters out of range')
+  return(Q)
+}
+
+# Example
+qsas(0.5,0,1,-1,1.5)
+tempf(qsas(0.35,0,1,-1,1.5))
+
+
+# Random number generation
+
+rsas <- function(n,mu,sigma,epsilon,delta){
+  ifelse(sigma>0 & delta>0,
+         sample <- mu+sigma*sinh((asinh(rnorm(n,0,1))+epsilon)/delta),
+         sample <- 'parameters out of range')
+  return(sample)
+}
+
+# Example
+tempf <- function(x) dsas(x,0,2,-1,1.5)
+hist(rsas(100000,0,2,-1,1.5),probability=T,breaks=50,ylim=c(0,0.4),xlim=c(-8,2),xlab="x",ylab="Density",cex.axis=1.5,cex.lab=1.5,main="")
+curve(tempf,-8,2,add=T,lwd=2)
+box()
+```

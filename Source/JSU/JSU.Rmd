@@ -1,0 +1,81 @@
+---
+title: "Two-piece Johnson-SU"
+author: "[F Javier Rubio](https://sites.google.com/site/fjavierrubio67/)"
+date: "25/06/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Two-piece Johnson-SU
+
+The [Johnson-SU distribution](https://en.wikipedia.org/wiki/Johnson%27s_SU-distribution) is a distribution with two shape parameters that jointly control skewness and kurtosis. An alternative way to induce skewness, that typically makes inference on the skewness parameter easier and allows for capturing higher levels of skewness, is the use of the two-piece construction. The implementation of the two-piece Johnson-SU distribution is simple by using the [R package](https://sites.google.com/site/fjavierrubio67/resources) 'twopiece'. The extension to the Double two-piece Johnson-SU distribution is also simple using the 'DTP' [R package](https://sites.google.com/site/fjavierrubio67/resources), as shown in the R code below.
+
+**References.**
+
+1. [Inference in Two-Piece Location-Scale Models with Jeffreys Priors](http://projecteuclid.org/euclid.ba/1393251764).
+
+2. [Bayesian modelling of skewness and kurtosis with Two-Piece Scale and shape distributions](http://projecteuclid.org/euclid.ejs/1440680330).
+
+```{r}
+rm(list=ls())
+# Required packages
+library(twopiece)
+library(DTP)
+
+###################################################################################################
+# Symmetric Johnson SU distribution with location zero and scale 1 and kurtosis parameter delta
+###################################################################################################
+
+djsu = function(x,delta=1,log=FALSE){
+  logPDF <- log(delta) - 0.5*log(1+x^2) +dnorm(delta*asinh(x),log=T) 
+  ifelse(is.numeric(logPDF), ifelse(log, return(logPDF), return(exp(logPDF))), 
+         logPDF)
+}
+
+# Plot of this density for delta = 0.5, 1.25.
+tempf1 = Vectorize(function(x)  djsu(x,0.5))
+tempf2 = Vectorize(function(x)  djsu(x,1.25))
+
+curve(tempf1,-5,5,n=1000,ylim=c(0,0.6),lwd=2,lty=1)
+curve(tempf2,-5,5,n=1000,add=T,lwd=2,lty=2)
+
+###################################################################################################
+# Two-piece Johnson SU distribution with the epsilon-skew parameterisation
+###################################################################################################
+# Example 1
+skewness = 0.5
+kurtosis = 0.5
+
+dtpvg= Vectorize(function(x) dtp4(x,0,1,skewness,kurtosis,FUN=djsu,param="eps"))
+curve(dtpvg,-10,5,n=1000,lwd=2)
+
+# Example 2
+skewness = 0.5
+kurtosis = 1.25
+
+dtpvg= Vectorize(function(x) dtp4(x,0,1,skewness,kurtosis,FUN=djsu,param="eps"))
+curve(dtpvg,-5,5,n=1000,lwd=2)
+
+
+###################################################################################################
+# Double two-piece Johnson SU distribution with the epsilon-skew parameterisation
+###################################################################################################
+# Example 1
+skewness = 0.5
+kurtosis1 = 0.5
+kurtosis2 = 1.25
+
+dtp2vg= Vectorize(function(x) ddtp(x,0,1,skewness,kurtosis1,kurtosis2,f=djsu,param="eps"))
+curve(dtp2vg,-15,5,n=1000,lwd=2)
+
+# Example 2
+skewness = 0.5
+kurtosis1 = 1.25
+kurtosis2 = 0.5
+
+dtp2vg= Vectorize(function(x) ddtp(x,0,1,skewness,kurtosis1,kurtosis2,f=djsu,param="eps"))
+curve(dtp2vg,-5,5,n=1000,lwd=2)
+```

@@ -1,0 +1,98 @@
+---
+title: "Two-piece Generalised hyperbolic distribution"
+author: "[F Javier Rubio](https://sites.google.com/site/fjavierrubio67/)"
+date: "25/06/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Two-piece Generalised Hyperbolic distribution
+
+The [Generalised Hyperbolic distribution](https://en.wikipedia.org/wiki/Generalised_hyperbolic_distribution) is a normal variance-mean mixture distribution where the mixing density is the generalised inverse Gaussian distribution. This distribution contains a skewness and a tail parameter, and it has been employed in financial applications and for modelling particle sizes. The shape parameters (skewness and kurtosis) of this distribution, being a member of the family of the generalysed hyperbolic family, tend to be difficult to estimate. One way to alleviate this problem consists of fixing the skewness parameter to zero, and to alternatively induce asymmetry by using the [two-piece construction](http://projecteuclid.org/euclid.ba/1393251764), since the skewness parameter in this family is easy to estimate. The implementation of the two-piece Generalised Hyperbolic distribution is simple by combining the R packages '[twopiece](https://sites.google.com/site/fjavierrubio67/resources)' and '[ghyp](https://cran.r-project.org/web/packages/ghyp/ghyp.pdf)'. The extension to the [Double two-piece](http://projecteuclid.org/euclid.ejs/1440680330) Generalised Hyperbolic distribution is also simple using the 'DTP' R package, as shown in the R code below.
+
+**References.**
+
+1. [Inference in Two-Piece Location-Scale Models with Jeffreys Priors](http://projecteuclid.org/euclid.ba/1393251764).
+
+2. [Bayesian modelling of skewness and kurtosis with Two-Piece Scale and shape distributions](http://projecteuclid.org/euclid.ejs/1440680330).
+
+3. [Exponentially decreasing distributions for the logarithm of particle size](http://www.jstor.org/stable/79167).
+
+4. [ghyp: A package on generalized hyperbolic distributions](https://cran.r-project.org/web/packages/ghyp/vignettes/Generalized_Hyperbolic_Distribution.pdf).
+
+5. See also: [Two-piece Variance Gamma distribution](https://rpubs.com/FJRubio/TPVG).
+
+
+```{r}
+rm(list=ls())
+# Required packages
+library(ghyp)
+library(twopiece)
+library(DTP)
+
+############################################################################################################
+# Symmetric Generalised Hyperbolic distribution with location zero and scale 1 and kurtosis parameter delta
+############################################################################################################
+# Define the kurtosis parameter to be controlled (lambda,chi,psi). The rest are fixed at the default values
+# specified in ghyp()
+
+# default value of the kurtosis parameter
+delta0 <- 0.5
+uni.ghyp <- ghyp()
+
+dghyp1 = function(x,delta=delta0,log=FALSE){
+  uni.ghyp@lambda = delta # specify accordingly (lambda,chi,psi).
+  logPDF <- dghyp(x, object=uni.ghyp, logvalue = TRUE)
+  ifelse(is.numeric(logPDF), ifelse(log, return(logPDF), return(exp(logPDF))), 
+         logPDF)
+}
+
+
+# Plot of this density for delta = 0.5, 1.25.
+tempf1 = Vectorize(function(x)  dghyp1(x,0.5))
+tempf2 = Vectorize(function(x)  dghyp1(x,1.25))
+
+curve(tempf1,-5,5,n=1000,ylim=c(0,0.6),lwd=2,lty=1)
+curve(tempf2,-5,5,n=1000,add=T,lwd=2,lty=2)
+
+###################################################################################################
+# Two-piece Generalised Hyperbolic distribution with the epsilon-skew parameterisation
+###################################################################################################
+# Example 1
+skewness = 0.5
+kurtosis = 0.5
+
+dtpvg= Vectorize(function(x) dtp4(x,0,1,skewness,kurtosis,FUN=dghyp1,param="eps"))
+curve(dtpvg,-5,5,n=1000,lwd=2)
+
+# Example 2
+skewness = 0.5
+kurtosis = 1.25
+
+dtpvg= Vectorize(function(x) dtp4(x,0,1,skewness,kurtosis,FUN=dghyp1,param="eps"))
+curve(dtpvg,-5,5,n=1000,lwd=2)
+
+
+###################################################################################################
+# Double two-piece Generalised Hyperbolic distribution with the epsilon-skew parameterisation
+###################################################################################################
+# Example 1
+skewness = 0.5
+kurtosis1 = 0.5
+kurtosis2 = 1.25
+
+dtp2vg= Vectorize(function(x) ddtp(x,0,1,skewness,kurtosis1,kurtosis2,f=dghyp1,param="eps"))
+curve(dtp2vg,-5,5,n=1000,lwd=2)
+
+# Example 2
+skewness = 0.5
+kurtosis1 = 1.25
+kurtosis2 = 0.5
+
+dtp2vg= Vectorize(function(x) ddtp(x,0,1,skewness,kurtosis1,kurtosis2,f=dghyp1,param="eps"))
+curve(dtp2vg,-5,5,n=1000,lwd=2)
+```
+
