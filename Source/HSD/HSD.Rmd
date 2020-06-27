@@ -1,0 +1,148 @@
+---
+title: "The Hyperbolic Secant Distribution"
+author: '[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Hyperbolic Secant Distribution
+
+The [Hyperbolic Secant distribution](https://en.wikipedia.org/wiki/Hyperbolic_secant_distribution) is a distribution with support on ${\mathbb R}$. It is a continuous, symmetric, and tractable distribution with heavier tails than those of the Normal distribution. The probability density function of the Hyperbolic Secant distribution is
+
+$$f(x; \mu, \sigma )={\frac{1}{2\sigma}}\;\operatorname {sech}\!\left({\frac{\pi(x-\mu) }{2\sigma}}\right)\!, $$
+where $\mu \in {\mathbb R}$, $\sigma>0$ and
+$${\displaystyle \operatorname {sech} (x)={\frac {1}{\cosh (x)}}={\frac {2}{e^{x}+e^{-x}}}={\frac {2e^{x}}{e^{2x}+1}}}.$$
+The cumulative distribution function of the Hyperbolic Secant distribution is
+$$F(x; \mu, \sigma ) = {\frac  {2}{\pi }}\arctan \!\left[\exp \left(\frac{\pi(x-\mu) }{2\sigma}\right)\right]\!. $$
+The mean of the hyperbolic secant distribution is $E[X] = \mu$, and the variance is $Var[X]=\sigma^2$. Asymmetric versions of this distribution using the [two piece construction](http://rpubs.com/FJRubio/TPD) are discussed in @steel:2015.
+
+The following R code shows the implementation of the pdf, the cdf, the quantile function, random number generation, and moments associated to the Hyperbolic Secant distribution.
+
+```{r}
+#########################################################################################
+# Parameters
+#########################################################################################
+# mu in R
+# sigma > 0
+#########################################################################################
+
+#------------------------------------------------------------------
+# PDF
+#------------------------------------------------------------------
+
+dsech <- Vectorize(function(x,mu,sigma,log = FALSE){
+  logden <-  -log(2) - log(sigma) - log( cosh( 0.5*pi*(x-mu)/sigma ) ) 
+  val <- ifelse(log, logden, exp(logden)) 
+  return(val)
+})
+
+#------------------------------------------------------------------
+# CDF
+#------------------------------------------------------------------
+
+psech <- Vectorize(function(x,mu,sigma,log.p = FALSE){
+  logcdf <-  log(2) - log(pi) + log( atan( exp( 0.5*pi*(x-mu)/sigma ) ) )
+  val <- ifelse(log.p, logcdf, exp(logcdf))
+  return(val)
+})
+
+#------------------------------------------------------------------
+# Quantile function
+#------------------------------------------------------------------
+
+qsech <- Vectorize(function(p,mu,sigma){
+  val <- sigma*2*log( tan( 0.5*pi*p ) )/pi + mu
+  return(val)
+})
+
+#------------------------------------------------------------------
+# Random number generation
+#------------------------------------------------------------------
+
+rsech <- function(n,mu,sigma){
+  u <- runif(n)
+  val <-  sigma*2*log( tan( 0.5*pi*u ) )/pi + mu
+  return(val)
+}
+
+
+##############################################
+# Examples
+##############################################
+#--------------------
+mu0 <- 0
+sigma0 <- 1
+#--------------------
+# PDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) dsech(x,mu0, sigma0))
+hist(sim, breaks = 50, probability = T, xlab= "x", ylab = "Density", cex.axis = 1.5, cex.lab = 1.5, main = "")
+curve(tempf,-6,6,n=1000, add= T, lwd = 2)
+box()
+
+# CDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) psech(x,mu0, sigma0))
+plot(ecdf(sim), xlab= "x", ylab = "CDF", main = "", cex.axis = 1.5, cex.lab = 1.5)
+curve(tempf,-6,6,n=1000, add= T, lwd = 2, col="red", lty = 2)
+box()
+
+# Sample Mean
+mean(sim)
+# Sample Variance
+var(sim)
+
+#--------------------
+mu0 <- 1
+sigma0 <- 2
+#--------------------
+# PDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) dsech(x,mu0, sigma0))
+hist(sim, breaks = 50, probability = T, xlab= "x", ylab = "Density", cex.axis = 1.5, cex.lab = 1.5, ylim = c(0,0.25), main = "")
+curve(tempf,-12,12,n=1000, add= T, lwd = 2)
+box()
+
+# CDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) psech(x,mu0, sigma0))
+plot(ecdf(sim), xlab= "x", ylab = "CDF", main = "", cex.axis = 1.5, cex.lab = 1.5)
+curve(tempf,-12,12,n=1000, add= T, lwd = 2, col="red", lty = 2)
+box()
+
+# Sample Mean
+mean(sim)
+# Sample Variance
+var(sim)
+
+#--------------------
+mu0 <- -1
+sigma0 <- 0.5
+#--------------------
+# PDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) dsech(x,mu0, sigma0))
+hist(sim, breaks = 50, probability = T, xlab= "x", ylab = "Density", cex.axis = 1.5, cex.lab = 1.5, main = "")
+curve(tempf,-5,5,n=1000, add= T, lwd = 2)
+box()
+
+# CDF
+sim <- rsech(n=10000, mu0, sigma0)
+tempf <- Vectorize(function(x) psech(x,mu0, sigma0))
+plot(ecdf(sim), xlab= "x", ylab = "CDF", main = "", cex.axis = 1.5, cex.lab = 1.5)
+curve(tempf,-5,5,n=1000, add= T, lwd = 2, col="red", lty = 2)
+box()
+
+# Sample Mean
+mean(sim)
+# Sample Variance
+var(sim)
+```
+
+# References
