@@ -1,0 +1,166 @@
+---
+title: "The Kumaraswamy Distribution"
+author: '[F. Javier Rubio](https://sites.google.com/site/fjavierrubio67/)'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Kumaraswamy Distribution
+
+The [Kumaraswamy distribution](https://en.wikipedia.org/wiki/Kumaraswamy_distribution) is a distribution with support on $[0,1]$. It represents an attractive alternative to the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) as its pdf and cdf can be written in closed form. An extensive comparison of these two distribution can be found at [@jones:2009]. The probability density function of the Kumaraswamy distribution is
+
+$${\displaystyle f(x;a,b)=abx^{a-1}{(1-x^{a})}^{b-1},\ \ {\mbox{where}}\ \ x\in [0,1].} $$
+where $a>0$, $b>0$. The cumulative distribution function of the Kumaraswamy distribution is
+$${\displaystyle F(x;a,b)={\displaystyle 1-(1-x^{a})^{b}},\ \ {\mbox{where}}\ \ x\in [0,1].} $$
+Estimation of the parameters of this distribution using the method of moments can be found at [this RPbus](http://rpubs.com/FJRubio/KumaMM).
+
+The following R code shows the implementation of the pdf, the cdf, the quantile function, random number generation, and moments associated to the Kumaraswamy distribution.
+
+```{r}
+#########################################################################################
+# Parameters
+#########################################################################################
+# a > 0
+# b > 0
+# 0 < x < 1
+#########################################################################################
+
+#------------------------------------------------------------------
+# PDF
+#------------------------------------------------------------------
+
+dkuma <- Vectorize(function(x,a,b,log = FALSE){
+logden <-  log(a) + log(b) + (a-1)*log(x) + (b-1)*log(1-x^a)
+val <- ifelse(log, logden, exp(logden)) 
+return(val)
+})
+
+#------------------------------------------------------------------
+# CDF
+#------------------------------------------------------------------
+
+pkuma <- Vectorize(function(q,a,b,log.p = FALSE){
+  cdf <-  1 - (1-q^a)^b
+  val <- ifelse(log.p, log(cdf), cdf)
+  return(val)
+})
+
+#------------------------------------------------------------------
+# Quantile function
+#------------------------------------------------------------------
+
+qkuma <- Vectorize(function(u,a,b){
+  val <-  ( 1 - (1-u)^(1/b) )^(1/a)
+  return(val)
+})
+
+#------------------------------------------------------------------
+# Random number generation
+#------------------------------------------------------------------
+
+rkuma <- function(n,a,b){
+  u <- runif(n)
+  val <-  ( 1 - (1-u)^(1/b) )^(1/a)
+  return(val)
+}
+
+
+#------------------------------------------------------------------
+# Moments of order n of the Kumaraswamy(a,b) distribution
+#------------------------------------------------------------------
+mn <- function(a,b,n){
+  log.num <- log(b) + lgamma(1 + n/a) + lgamma(b)
+  log.den <- lgamma(1 + b + n/a)
+  return(exp(log.num-log.den))
+}
+
+
+
+##############################################
+# Examples
+##############################################
+a0 <- 1
+b0 <- 1
+
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+#----------------------
+a0 <- 2
+b0 <- 3
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+#----------------------
+a0 <- 3
+b0 <- 2
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+
+#----------------------
+a0 <- 20
+b0 <- 30
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+#----------------------
+a0 <- 30
+b0 <- 20
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+
+#----------------------
+a0 <- 2
+b0 <- 3
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+
+
+#----------------------
+a0 <- 2.2
+b0 <- 3
+#----------------------
+sim <- rkuma(n=10000, a0, b0)
+tempf <- Vectorize(function(x) dkuma(x,a0,b0))
+hist(sim, breaks = 50, probability = T)
+curve(tempf,0,1,n=1000, add= T, lwd = 2)
+box()
+```
+
+# References
